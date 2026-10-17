@@ -2,7 +2,9 @@
 
 [AtomGit CLI](https://atomgit.com/hust-open-atom-club/atomgit-cli) manages AtomGit repositories, pull requests, issues, releases, and workflows from the terminal.
 
-This unofficial Python distribution packages the original prebuilt binaries. Once published, install it with:
+This unofficial Python distribution packages the original prebuilt binaries. The packaging source code is available in [Noai-oss/ag-cli-py](https://github.com/Noai-oss/ag-cli-py).
+
+Once published, install it with:
 
 ```sh
 uv tool install ag-cli-py
