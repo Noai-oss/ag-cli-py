@@ -1,0 +1,43 @@
+name: Update upstream version
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-upstream-version
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: false
+      - name: Check upstream version and assets
+        id: update
+        env:
+          ATOMGIT_TOKEN: ${{ secrets.ATOMGIT_TOKEN }}
+        run: uv run --locked python -m scripts.update_version --report "$RUNNER_TEMP/update-pr.md"
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        if: steps.update.outputs.changed == 'true'
+        with:
+          base: main
+          branch: update-upstream-version
+          add-paths: wheel.json
+          commit-message: Update upstream AtomGit CLI to ${{ steps.update.outputs.version }}
+          title: Update AtomGit CLI ${{ steps.update.outputs.previous_version }} → ${{ steps.update.outputs.version }}
+          body-path: ${{ runner.temp }}/update-pr.md

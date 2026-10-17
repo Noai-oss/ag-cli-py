@@ -1,0 +1,82 @@
+name: Release
+run-name: ${{ (github.event_name == 'push' || inputs.publish) && 'Publish' || 'Validate' }} ${{ inputs.tag || github.ref_name }}
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing version tag to validate or publish (e.g. v0.7.4)"
+        type: string
+        required: true
+      publish:
+        description: Publish the selected version tag to PyPI
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      publish_requested: ${{ steps.check.outputs.publish_requested }}
+      version: ${{ steps.check.outputs.version }}
+      source_commit: ${{ steps.check.outputs.source_commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: false
+      - name: Resolve target version and validate main ancestry
+        id: check
+        env:
+          PUBLISH_REQUESTED: ${{ github.event_name == 'push' || inputs.publish }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && -z "$RELEASE_TAG" ]]; then
+            echo "::error::A version tag is required for manual runs."
+            exit 1
+          fi
+          uv run --locked python -m scripts.release \
+            --ref "$GITHUB_REF" --tag "$RELEASE_TAG" --publish "$PUBLISH_REQUESTED"
+
+  validate:
+    needs: preflight
+    uses: ./.github/workflows/ci.yml
+    with:
+      release_mode: true
+      source_sha: ${{ needs.preflight.outputs.source_commit }}
+
+  publish:
+    name: Publish ${{ needs.preflight.outputs.version }} to PyPI
+    needs: [preflight, validate]
+    if: needs.preflight.outputs.publish_requested == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: false
+      - name: Download tested wheels
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          artifact-ids: ${{ needs.validate.outputs.artifact_id }}
+          path: dist
+      - name: Upload the validated wheels
+        run: uv publish --trusted-publishing always dist/*.whl

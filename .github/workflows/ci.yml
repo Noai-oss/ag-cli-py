@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+    inputs:
+      release_mode:
+        type: boolean
+        default: false
+      source_sha:
+        type: string
+        default: ""
+    outputs:
+      artifact_id:
+        value: ${{ jobs.build.outputs.artifact_id }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ inputs.release_mode && format('release-ci-{0}', github.run_id) || format('ci-{0}-{1}', github.event_name, github.ref) }}
+  cancel-in-progress: ${{ !inputs.release_mode }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: false
+      - run: uv sync --locked
+      - run: uv run --locked ruff check .
+      - run: uv run --locked ruff format --check .
+      - run: uv run --locked python -m unittest discover -s tests -v
+      - name: Build the complete wheel set
+        run: uv run --locked python build.py --output-dir "$RUNNER_TEMP/wheels"
+      - run: uv run --locked twine check "$RUNNER_TEMP"/wheels/*.whl
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        id: upload
+        with:
+          name: wheels-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/wheels/*.whl
+          if-no-files-found: error
+          retention-days: 30
+
+  smoke:
+    needs: build
+    name: Smoke (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: manylinux_2_17_x86_64
+          - os: macos-15
+            platform: macosx_12_0_arm64
+          - os: windows-2022
+            platform: win_amd64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: false
+      - run: uv sync --locked
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact_id }}
+          path: dist
+      - name: Install and exercise the built wheel
+        env:
+          WHEEL_PLATFORM: ${{ matrix.platform }}
+        shell: bash
+        run: uv run --locked python -m scripts.smoke dist/*-"$WHEEL_PLATFORM".whl
+
+  ci-result:
+    name: CI result
+    if: ${{ always() }}
+    needs: [build, smoke]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every build and runtime check
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          SMOKE_RESULT: ${{ needs.smoke.result }}
+        run: |
+          printf 'Build: %s\n\nRuntime tests: %s\n' \
+            "$BUILD_RESULT" "$SMOKE_RESULT" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$BUILD_RESULT" != success || "$SMOKE_RESULT" != success ]]; then
+            echo "Every required job must succeed, including jobs skipped or cancelled upstream."
+            exit 1
+          fi

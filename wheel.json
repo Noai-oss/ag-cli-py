@@ -1,0 +1,57 @@
+{
+  "name": "ag-cli-py",
+  "version": "0.7.4",
+  "license": "MulanPSL-2.0 AND Apache-2.0 AND BSD-3-Clause AND BSD-1-Clause AND MIT AND SunPro AND LicenseRef-Go-math-exp",
+  "description": "Unofficial PyPI distribution of the original AtomGit CLI binaries",
+  "homepage": "https://atomgit.com/hust-open-atom-club/atomgit-cli",
+  "binaries": {
+    "macosx_12_0_arm64": [
+      {
+        "name": "ag-cli",
+        "path": "build/darwin_arm64/ag-cli"
+      }
+    ],
+    "macosx_12_0_x86_64": [
+      {
+        "name": "ag-cli",
+        "path": "build/darwin_amd64/ag-cli"
+      }
+    ],
+    "manylinux_2_17_x86_64": [
+      {
+        "name": "ag-cli",
+        "path": "build/linux_amd64/ag-cli"
+      }
+    ],
+    "musllinux_1_2_x86_64": [
+      {
+        "name": "ag-cli",
+        "path": "build/linux_amd64/ag-cli"
+      }
+    ],
+    "manylinux_2_17_aarch64": [
+      {
+        "name": "ag-cli",
+        "path": "build/linux_arm64/ag-cli"
+      }
+    ],
+    "musllinux_1_2_aarch64": [
+      {
+        "name": "ag-cli",
+        "path": "build/linux_arm64/ag-cli"
+      }
+    ],
+    "win_amd64": [
+      {
+        "name": "ag-cli",
+        "path": "build/windows_amd64/ag-cli.exe"
+      }
+    ],
+    "win_arm64": [
+      {
+        "name": "ag-cli",
+        "path": "build/windows_arm64/ag-cli.exe"
+      }
+    ]
+  }
+}
