@@ -42,7 +42,7 @@ uv run --locked python -m scripts.update_version
 
 The Update workflow runs daily or manually and opens a version-only PR when all required release assets are present. Enable GitHub Actions to create pull requests in repository settings. Public upstream requests need no token; an optional `ATOMGIT_TOKEN` secret is supported. Review platform and license changes before merging an update.
 
-A `v*` tag push publishes after validation. The tag must match its commit's `wheel.json` and belong to `main`. For a manual check, run **Actions → Release** from `main`, supply an existing tag, and leave **publish** unchecked.
+A `v*` tag push publishes after validation. The tag must match the version in `wheel.json`, and the tagged commit must be on `main`. For a manual check, run **Actions → Release** from `main`, supply an existing tag, and leave **publish** unchecked.
 
 Before publishing, configure the PyPI Trusted Publisher for project `ag-cli-py`, owner `Noai-oss`, repository `ag-cli-py`, workflow `release.yml`, and GitHub environment `pypi`. Publication uses the exact wheel artifact tested by CI. For a partial upload failure, rerun failed jobs in the original run to reuse that artifact.
 
