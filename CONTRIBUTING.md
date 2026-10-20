@@ -7,7 +7,7 @@ uv sync --locked
 uv run --locked python build.py
 ```
 
-The build downloads official archives and `checksums.txt`, verifies SHA-256, and writes eight wheels to `dist/`. Each wheel contains the unmodified executable, license notices, and package metadata. Intermediate files in `build/<target>/` contain only the executable and `licenses/`; `build/` and `dist/` are not committed.
+The build downloads official archives and `checksums.txt` from GitHub Releases, verifies SHA-256, and writes eight wheels to `dist/`. Each wheel contains the unmodified executable, license notices, and package metadata. Intermediate files in `build/<target>/` contain only the executable and `licenses/`; `build/` and `dist/` are not committed.
 
 ```sh
 uv run --locked python build.py --target linux_amd64
@@ -40,7 +40,7 @@ The macOS 12 baseline follows upstream's [Go 1.26 toolchain](https://go.dev/doc/
 uv run --locked python -m scripts.update_version
 ```
 
-The Update workflow runs daily or manually and opens a version-only PR when all required release assets are present. Enable GitHub Actions to create pull requests in repository settings. Public upstream requests need no token; an optional `ATOMGIT_TOKEN` secret is supported. Review platform and license changes before merging an update.
+The Update workflow checks GitHub Releases daily or manually and opens a version-only PR when all required release assets are present. Enable GitHub Actions to create pull requests in repository settings. The workflow uses the built-in `GITHUB_TOKEN`; no extra secret is needed. Local checks work without a token, or you can set `GITHUB_TOKEN` for a higher API rate limit. Review platform and license changes before merging an update.
 
 A `v*` tag push publishes after validation. The tag must match the version in `wheel.json`, and the tagged commit must be on `main`. For a manual check, run **Actions → Release** from `main`, supply an existing tag, and leave **publish** unchecked.
 

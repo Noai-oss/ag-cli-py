@@ -129,7 +129,7 @@ def main() -> None:
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     readme += (
-        f"\nUpstream release: [{tag}]({upstream}/releases/{tag}).\n"
+        f"\nUpstream release: [{tag}]({upstream}/releases/tag/{tag}).\n"
         f"Source: [{tag}]({upstream}/tree/{tag}).\n"
     )
 

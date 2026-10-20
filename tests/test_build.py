@@ -155,7 +155,10 @@ class BuildTests(unittest.TestCase):
                             archive.read(path), (root / source).read_bytes()
                         )
                     self.assertIn("# Test distribution\n", metadata.get_payload())
-                    self.assertIn("/releases/v0.7.4)", metadata.get_payload())
+                    self.assertIn(
+                        "https://github.com/hust-open-atom-club/atomgit-cli/releases/tag/v0.7.4)",
+                        metadata.get_payload(),
+                    )
                     record_path = next(
                         name for name in names if name.endswith("/RECORD")
                     )

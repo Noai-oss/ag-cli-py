@@ -1,4 +1,4 @@
-"""Check AtomGit release selection and atomic version updates."""
+"""Check GitHub release selection and atomic version updates."""
 
 import copy
 import json
@@ -20,7 +20,9 @@ def release(version="0.8.0"):
         "assets": [
             {
                 "name": name,
-                "browser_download_url": f"https://atomgit.com/example/{name}",
+                "browser_download_url": (
+                    f"{CONFIG['homepage']}/releases/download/v{version}/{name}"
+                ),
             }
             for name in asset_names(CONFIG)
         ],
@@ -28,7 +30,7 @@ def release(version="0.8.0"):
 
 
 class UpdateTests(unittest.TestCase):
-    def test_updates_only_version_using_atomgit_asset_shape(self):
+    def test_updates_only_version_using_github_release_assets(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "wheel.json"
             path.write_text(json.dumps(CONFIG, indent=2) + "\n")
@@ -37,15 +39,18 @@ class UpdateTests(unittest.TestCase):
                 update_version, "latest_release", return_value=release()
             ) as latest:
                 self.assertTrue(
-                    update_version.update_version(path, "atomgit-token", report)
+                    update_version.update_version(path, "github-token", report)
                 )
             latest.assert_called_once_with(
-                "hust-open-atom-club/atomgit-cli", "atomgit-token"
+                "hust-open-atom-club/atomgit-cli", "github-token"
             )
             self.assertEqual(
                 json.loads(path.read_text()), {**CONFIG, "version": "0.8.0"}
             )
-            self.assertIn("/releases/v0.8.0", report.read_text())
+            self.assertIn(
+                "https://github.com/hust-open-atom-club/atomgit-cli/releases/tag/v0.8.0",
+                report.read_text(),
+            )
 
     def test_invalid_assets_leave_config_and_report_unchanged(self):
         for fault in ("missing", "duplicate", "http", "no_url", "no_checksums"):
@@ -112,23 +117,22 @@ class UpdateTests(unittest.TestCase):
                 update_version.update_version(path)
             self.assertEqual(path.read_text(), original)
 
-    def test_latest_stable_uses_version_order_and_all_atomgit_prerelease_flags(self):
+    def test_latest_stable_uses_version_order_and_github_release_flags(self):
         values = [release("0.7.4"), release("0.10.0"), release("0.9.0")]
         values += [
             dict(release("8.0.0"), draft=True),
             dict(release("9.0.0"), prerelease=True),
-            dict(release("10.0.0"), release_status="pre"),
         ]
         values += [
             {"tag_name": tag}
             for tag in ("v1.0.0rc1", "v1.0.0-beta.1", "v01.0.0", "snapshot", "v1.0")
         ]
         with patch.object(update_version, "get_json", return_value=values) as get:
-            selected = update_version.latest_release("owner/repo", "atomgit-token")
+            selected = update_version.latest_release("owner/repo", "github-token")
         self.assertEqual(selected["tag_name"], "v0.10.0")
         get.assert_called_once_with(
-            "https://api.atomgit.com/api/v5/repos/owner/repo/releases?page=1&per_page=100&direction=desc",
-            "atomgit-token",
+            "https://api.github.com/repos/owner/repo/releases?page=1&per_page=100",
+            "github-token",
         )
 
     def test_pagination_is_not_limited_to_first_hundred_releases(self):
@@ -147,7 +151,7 @@ class UpdateTests(unittest.TestCase):
             self.assertRaisesRegex(ValueError, "Repeated"),
         ):
             update_version.latest_release("owner/repo")
-        for value in ([], {}, [dict(release(), release_status="pre")]):
+        for value in ([], {}, [dict(release(), prerelease=True)]):
             with (
                 self.subTest(value=value),
                 patch.object(update_version, "get_json", return_value=value),

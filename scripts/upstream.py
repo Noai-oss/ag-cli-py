@@ -1,4 +1,4 @@
-"""AtomGit release naming and public API access."""
+"""AtomGit CLI release naming and GitHub API access."""
 
 import json
 import re
@@ -30,12 +30,12 @@ def upstream_repository(homepage: str) -> str:
     repository = url.path.strip("/")
     if (
         url.scheme != "https"
-        or url.netloc not in ("atomgit.com", "gitcode.com")
+        or url.netloc != "github.com"
         or url.query
         or url.fragment
         or not re.fullmatch(r"[\w.-]+/[\w.-]+", repository)
     ):
-        raise ValueError(f"Expected an AtomGit repository homepage, got {homepage!r}")
+        raise ValueError(f"Expected a GitHub repository homepage, got {homepage!r}")
     return repository
 
 
@@ -55,7 +55,7 @@ def fetch(url: str) -> bytes:
 
 
 def get_json(url: str, token: str | None = None) -> list | dict:
-    headers = {"User-Agent": "ag-cli-py", "Accept": "application/json"}
+    headers = {"User-Agent": "ag-cli-py", "Accept": "application/vnd.github+json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
     request = urllib.request.Request(url, headers=headers)

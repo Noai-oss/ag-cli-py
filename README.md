@@ -1,6 +1,6 @@
 # ag-cli-py
 
-[AtomGit CLI](https://atomgit.com/hust-open-atom-club/atomgit-cli) manages AtomGit repositories, pull requests, issues, releases, and workflows from the terminal.
+[AtomGit CLI](https://github.com/hust-open-atom-club/atomgit-cli) manages AtomGit repositories, pull requests, issues, releases, and workflows from the terminal.
 
 This unofficial Python distribution packages the original prebuilt binaries. The packaging source code is available in [Noai-oss/ag-cli-py](https://github.com/Noai-oss/ag-cli-py).
 
@@ -26,7 +26,7 @@ Upstream also provides LoongArch64 binaries. They are excluded from this distrib
 
 ## Usage and updates
 
-Run `ag-cli auth login` to authenticate. For CLI documentation and issues, see the [upstream project](https://atomgit.com/hust-open-atom-club/atomgit-cli).
+Run `ag-cli auth login` to authenticate. For CLI documentation and issues, see the [upstream project](https://github.com/hust-open-atom-club/atomgit-cli).
 
 Upgrade this distribution through your Python package manager:
 
