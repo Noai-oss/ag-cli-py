@@ -21,17 +21,17 @@ class UpstreamTests(unittest.TestCase):
         self.assertIn("checksums.txt", names)
 
     def test_repository_hosts_and_url_shapes(self):
-        for host in ("atomgit.com", "gitcode.com"):
-            self.assertEqual(
-                upstream.upstream_repository(f"https://{host}/owner/repo/"),
-                "owner/repo",
-            )
+        self.assertEqual(
+            upstream.upstream_repository("https://github.com/owner/repo/"),
+            "owner/repo",
+        )
         for url in (
-            "http://atomgit.com/owner/repo",
-            "https://atomgit.com.evil/owner/repo",
-            "https://github.com/owner/repo",
-            "https://atomgit.com/owner/repo?token=x",
-            "https://atomgit.com/owner/repo/tree/main",
+            "http://github.com/owner/repo",
+            "https://github.com.evil/owner/repo",
+            "https://atomgit.com/owner/repo",
+            "https://gitcode.com/owner/repo",
+            "https://github.com/owner/repo?token=x",
+            "https://github.com/owner/repo/tree/main",
         ):
             with self.subTest(url=url), self.assertRaises(ValueError):
                 upstream.upstream_repository(url)
@@ -47,23 +47,27 @@ class UpstreamTests(unittest.TestCase):
             "scripts.upstream.urllib.request.urlopen", return_value=io.BytesIO(b"[]")
         ) as request:
             self.assertEqual(
-                upstream.get_json("https://api.atomgit.com/test", "test-token"), []
+                upstream.get_json("https://api.github.com/test", "test-token"), []
             )
             self.assertEqual(
                 request.call_args.args[0].get_header("Authorization"),
                 "Bearer test-token",
             )
             self.assertEqual(request.call_args.kwargs["timeout"], 30)
+            self.assertEqual(
+                request.call_args.args[0].get_header("Accept"),
+                "application/vnd.github+json",
+            )
         with patch(
             "scripts.upstream.urllib.request.urlopen",
             return_value=io.BytesIO(b"archive"),
         ) as request:
-            self.assertEqual(upstream.fetch("https://atomgit.com/file"), b"archive")
+            self.assertEqual(upstream.fetch("https://github.com/file"), b"archive")
             self.assertIsNone(request.call_args.args[0].get_header("Authorization"))
 
     def test_http_failure_is_reported_without_retry(self):
         error = urllib.error.HTTPError(
-            "https://atomgit.com/file", 503, "unavailable", {}, None
+            "https://github.com/file", 503, "unavailable", {}, None
         )
         with (
             patch(
@@ -71,5 +75,5 @@ class UpstreamTests(unittest.TestCase):
             ) as request,
             self.assertRaises(urllib.error.HTTPError),
         ):
-            upstream.fetch("https://atomgit.com/file")
+            upstream.fetch("https://github.com/file")
         request.assert_called_once()

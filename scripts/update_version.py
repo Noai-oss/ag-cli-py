@@ -1,4 +1,4 @@
-"""Propose the newest stable AtomGit release after checking required assets."""
+"""Propose the newest stable GitHub release after checking required assets."""
 
 import argparse
 import json
@@ -11,28 +11,24 @@ from scripts.upstream import asset_names, get_json, stable_version, upstream_rep
 
 
 def latest_release(repository: str, token: str | None = None) -> dict:
-    """Read AtomGit's paginated list; it has no GitHub /releases/latest contract."""
+    """Select the highest stable version across all GitHub release pages."""
     releases = []
     seen = set()
     page = 1
     while True:
         batch = get_json(
-            f"https://api.atomgit.com/api/v5/repos/{repository}/releases"
-            f"?page={page}&per_page=100&direction=desc",
+            f"https://api.github.com/repos/{repository}/releases"
+            f"?page={page}&per_page=100",
             token,
         )
         if not isinstance(batch, list):
-            raise TypeError("Expected an AtomGit release array")
+            raise TypeError("Expected a GitHub release array")
         for release in batch:
             tag = release["tag_name"]
             if tag in seen:
                 raise ValueError(f"Repeated release while paginating: {tag}")
             seen.add(tag)
-            if (
-                release.get("draft")
-                or release.get("prerelease")
-                or release.get("release_status") == "pre"
-            ):
+            if release.get("draft") or release.get("prerelease"):
                 continue
             try:
                 version = stable_version(tag)
@@ -43,7 +39,7 @@ def latest_release(repository: str, token: str | None = None) -> dict:
             break
         page += 1
     if not releases:
-        raise ValueError("No stable AtomGit release found")
+        raise ValueError("No stable GitHub release found")
     return max(releases, key=lambda item: item[0])[1]
 
 
@@ -75,7 +71,7 @@ def update_version(
     if report_path:
         report_path.write_text(
             f"Update AtomGit CLI from {previous} to {version}.\n\n"
-            f"Upstream release: {config['homepage']}/releases/v{version}\n\n"
+            f"Upstream release: {config['homepage']}/releases/tag/v{version}\n\n"
             "All configured archives and checksums.txt have unique HTTPS asset "
             "links. CI will download, verify SHA-256 checksums, build and test "
             "the wheels.\n\n"
@@ -93,7 +89,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
-    update_version(ROOT / "wheel.json", os.environ.get("ATOMGIT_TOKEN"), args.report)
+    update_version(ROOT / "wheel.json", os.environ.get("GITHUB_TOKEN"), args.report)
 
 
 if __name__ == "__main__":

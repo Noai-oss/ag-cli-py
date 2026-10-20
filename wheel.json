@@ -3,7 +3,7 @@
   "version": "0.7.4",
   "license": "MulanPSL-2.0 AND Apache-2.0 AND BSD-3-Clause AND BSD-1-Clause AND MIT AND SunPro AND LicenseRef-Go-math-exp",
   "description": "Unofficial PyPI distribution of the original AtomGit CLI binaries",
-  "homepage": "https://atomgit.com/hust-open-atom-club/atomgit-cli",
+  "homepage": "https://github.com/hust-open-atom-club/atomgit-cli",
   "binaries": {
     "macosx_12_0_arm64": [
       {
