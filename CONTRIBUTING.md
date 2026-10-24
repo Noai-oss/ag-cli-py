@@ -40,7 +40,7 @@ The macOS 12 baseline follows upstream's [Go 1.26 toolchain](https://go.dev/doc/
 uv run --locked python -m scripts.update_version
 ```
 
-The Update workflow checks GitHub Releases daily or manually and opens a version-only PR when all required release assets are present. Enable GitHub Actions to create pull requests in repository settings. The workflow uses the built-in `GITHUB_TOKEN`; no extra secret is needed. Local checks work without a token, or you can set `GITHUB_TOKEN` for a higher API rate limit. Review platform and license changes before merging an update.
+The Update workflow checks GitHub Releases every Friday at 06:17 UTC or manually and opens a version-only PR when all required release assets are present. Enable GitHub Actions to create pull requests in repository settings. The workflow uses the built-in `GITHUB_TOKEN`; no extra secret is needed. Local checks work without a token, or you can set `GITHUB_TOKEN` for a higher API rate limit. Review platform and license changes before merging an update.
 
 A `v*` tag push publishes after validation. The tag must match the version in `wheel.json`, and the tagged commit must be on `main`. For a manual check, run **Actions → Release** from `main`, supply an existing tag, and leave **publish** unchecked.
 
