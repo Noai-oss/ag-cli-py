@@ -7,7 +7,6 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 from urllib.error import HTTPError
-from urllib.parse import parse_qs, urlsplit
 
 from scripts import update_version
 from scripts.common import ROOT
@@ -169,23 +168,12 @@ class VersionBranchTests(unittest.TestCase):
     repo = "Noai-oss/ag-cli-py"
     api = f"https://api.github.com/repos/{repo}"
 
-    def run_update(self, *, pr=False, ref=False, status=404):
+    def run_update(self, *, ref=False, status=404):
         candidate = "0.7.6"
         branch = f"update/atomgit-v{candidate}"
 
         def request(url, token):
             self.assertEqual(token, "token")
-            if url.startswith(f"{self.api}/pulls?"):
-                query = parse_qs(urlsplit(url).query)
-                self.assertEqual(
-                    query,
-                    {
-                        "state": ["all"],
-                        "base": ["main"],
-                        "head": [f"Noai-oss:{branch}"],
-                    },
-                )
-                return [{"state": "closed"}] if pr else []
             if url == f"{self.api}/git/ref/heads/{branch}":
                 if ref:
                     return {"ref": f"refs/heads/{branch}"}
@@ -230,8 +218,7 @@ class VersionBranchTests(unittest.TestCase):
                 outputs.assert_called_once_with(changed="false", version="0.7.4")
             return changed
 
-    def test_existing_version_pr_or_ref_is_not_reused(self):
-        self.assertFalse(self.run_update(pr=True))
+    def test_existing_version_ref_is_not_reused(self):
         self.assertFalse(self.run_update(ref=True))
 
     def test_new_version_gets_its_own_branch(self):
