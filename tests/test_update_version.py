@@ -47,10 +47,13 @@ class UpdateTests(unittest.TestCase):
             self.assertEqual(
                 json.loads(path.read_text()), {**CONFIG, "version": "0.8.0"}
             )
+            body = report.read_text()
             self.assertIn(
                 "https://github.com/hust-open-atom-club/atomgit-cli/releases/tag/v0.8.0",
-                report.read_text(),
+                body,
             )
+            self.assertIn("`$atomgit-release-upgrade`", body)
+            self.assertIn("`.agents/skills/atomgit-release-upgrade/SKILL.md`", body)
 
     def test_invalid_assets_leave_config_and_report_unchanged(self):
         for fault in ("missing", "duplicate", "http", "no_url", "no_checksums"):
