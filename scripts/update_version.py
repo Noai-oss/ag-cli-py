@@ -6,7 +6,7 @@ import os
 import re
 from pathlib import Path
 from urllib.error import HTTPError
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import urlsplit
 
 from scripts.common import ROOT, canonical_version, outputs, summary
 from scripts.upstream import asset_names, get_json, stable_version, upstream_repository
@@ -59,19 +59,11 @@ def candidate_release(config: dict, release: dict) -> str | None:
     return version
 
 
-def update_already_exists(repository: str, branch: str, token: str) -> bool:
-    """Do not reuse a version branch or recreate a closed version PR."""
+def version_branch_exists(repository: str, branch: str, token: str) -> bool:
+    """Check the exact remote ref without reusing an existing version branch."""
     if not re.fullmatch(r"[\w.-]+/[\w.-]+", repository):
         raise ValueError("Expected a GitHub owner/repository")
     api = f"https://api.github.com/repos/{repository}"
-    owner = repository.split("/")[0]
-    query = urlencode({"state": "all", "base": "main", "head": f"{owner}:{branch}"})
-    pulls = get_json(f"{api}/pulls?{query}", token)
-    if not isinstance(pulls, list):
-        raise TypeError("Expected a GitHub pull request list")
-    if pulls:
-        return True
-
     try:
         ref = get_json(f"{api}/git/ref/heads/{branch}", token)
     except HTTPError as exc:
@@ -102,7 +94,7 @@ def update_version(
     if packaging_repository is not None:
         if not token:
             raise ValueError("Checking existing upgrades requires a GitHub token")
-        if update_already_exists(packaging_repository, branch, token):
+        if version_branch_exists(packaging_repository, branch, token):
             summary(f"Upgrade v{version} already exists; left it unchanged.")
             outputs(changed="false", version=previous)
             return False
