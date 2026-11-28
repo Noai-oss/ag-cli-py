@@ -22,6 +22,8 @@ from scripts.smoke import run_smoke
 from scripts.upstream import archive_name
 
 CONFIG = json.loads((build.ROOT / "wheel.json").read_text())
+# Keep the synthetic CLI output and assertions independent of release bumps.
+CONFIG["version"] = "0.7.4"
 LICENSE = b"upstream license fixture\r\n"
 MANUAL = b".TH AG-CLI 1\n"
 # This stand-in verifies packaging/install wiring, not the real upstream runtime.
