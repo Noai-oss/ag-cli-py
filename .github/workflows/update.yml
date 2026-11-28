@@ -15,6 +15,8 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-24.04
+    env:
+      UPDATE_PR_BRANCH: update-upstream-version
     timeout-minutes: 10
     permissions:
       contents: write
@@ -31,12 +33,16 @@ jobs:
         id: update
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: uv run --locked python -m scripts.update_version --report "$RUNNER_TEMP/update-pr.md"
+        run: >-
+          uv run --locked python -m scripts.update_version
+          --report "$RUNNER_TEMP/update-pr.md"
+          --packaging-repository "$GITHUB_REPOSITORY"
+          --pr-branch "$UPDATE_PR_BRANCH"
       - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         if: steps.update.outputs.changed == 'true'
         with:
           base: main
-          branch: update-upstream-version
+          branch: ${{ env.UPDATE_PR_BRANCH }}
           add-paths: wheel.json
           reviewers: Noai-oss
           commit-message: Update upstream AtomGit CLI to ${{ steps.update.outputs.version }}
