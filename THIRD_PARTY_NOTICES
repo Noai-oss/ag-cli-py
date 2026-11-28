@@ -241,24 +241,24 @@ golang.org/x/term v0.34.0
 Source: https://github.com/golang/term/tree/v0.34.0
 Original notice: term/LICENSE
 
-Go runtime, standard library and bundled golang.org/x packages go1.26.8
-Source: https://github.com/golang/go/tree/go1.26.8
+Go runtime, standard library and bundled golang.org/x packages go1.26.11
+Source: https://github.com/golang/go/tree/go1.26.11
 Original notice: go/LICENSE
 
-Go runtime, standard library and bundled golang.org/x packages go1.26.8
-Source: https://github.com/golang/go/tree/go1.26.8
+Go runtime, standard library and bundled golang.org/x packages go1.26.11
+Source: https://github.com/golang/go/tree/go1.26.11
 Original notice: go/vendor/golang.org/x/crypto/LICENSE
 
-Go runtime, standard library and bundled golang.org/x packages go1.26.8
-Source: https://github.com/golang/go/tree/go1.26.8
+Go runtime, standard library and bundled golang.org/x packages go1.26.11
+Source: https://github.com/golang/go/tree/go1.26.11
 Original notice: go/vendor/golang.org/x/net/LICENSE
 
-Go runtime, standard library and bundled golang.org/x packages go1.26.8
-Source: https://github.com/golang/go/tree/go1.26.8
+Go runtime, standard library and bundled golang.org/x packages go1.26.11
+Source: https://github.com/golang/go/tree/go1.26.11
 Original notice: go/vendor/golang.org/x/sys/LICENSE
 
-Go runtime, standard library and bundled golang.org/x packages go1.26.8
-Source: https://github.com/golang/go/tree/go1.26.8
+Go runtime, standard library and bundled golang.org/x packages go1.26.11
+Source: https://github.com/golang/go/tree/go1.26.11
 Original notice: go/vendor/golang.org/x/text/LICENSE
 ========================================================================
 
@@ -304,24 +304,24 @@ golang.org/x/term v0.34.0
 Source: https://github.com/golang/term/tree/v0.34.0
 Original notice: term/PATENTS
 
-Go runtime, standard library and bundled golang.org/x packages go1.26.8
-Source: https://github.com/golang/go/tree/go1.26.8
+Go runtime, standard library and bundled golang.org/x packages go1.26.11
+Source: https://github.com/golang/go/tree/go1.26.11
 Original notice: go/PATENTS
 
-Go runtime, standard library and bundled golang.org/x packages go1.26.8
-Source: https://github.com/golang/go/tree/go1.26.8
+Go runtime, standard library and bundled golang.org/x packages go1.26.11
+Source: https://github.com/golang/go/tree/go1.26.11
 Original notice: go/vendor/golang.org/x/crypto/PATENTS
 
-Go runtime, standard library and bundled golang.org/x packages go1.26.8
-Source: https://github.com/golang/go/tree/go1.26.8
+Go runtime, standard library and bundled golang.org/x packages go1.26.11
+Source: https://github.com/golang/go/tree/go1.26.11
 Original notice: go/vendor/golang.org/x/net/PATENTS
 
-Go runtime, standard library and bundled golang.org/x packages go1.26.8
-Source: https://github.com/golang/go/tree/go1.26.8
+Go runtime, standard library and bundled golang.org/x packages go1.26.11
+Source: https://github.com/golang/go/tree/go1.26.11
 Original notice: go/vendor/golang.org/x/sys/PATENTS
 
-Go runtime, standard library and bundled golang.org/x packages go1.26.8
-Source: https://github.com/golang/go/tree/go1.26.8
+Go runtime, standard library and bundled golang.org/x packages go1.26.11
+Source: https://github.com/golang/go/tree/go1.26.11
 Original notice: go/vendor/golang.org/x/text/PATENTS
 ========================================================================
 
@@ -559,12 +559,12 @@ Original notice: mousetrap/LICENSE
 
 
 ========================================================================
-Go fiat-crypto go1.26.8
-Source: https://github.com/golang/go/blob/go1.26.8/src/crypto/internal/fips140/edwards25519/scalar.go
+Go fiat-crypto go1.26.11
+Source: https://github.com/golang/go/blob/go1.26.11/src/crypto/internal/fips140/edwards25519/scalar.go
 Original notice: go/fiat-crypto-NOTICE
 ========================================================================
 
-https://github.com/golang/go/blob/go1.26.8/src/crypto/internal/fips140/edwards25519/scalar.go
+https://github.com/golang/go/blob/go1.26.11/src/crypto/internal/fips140/edwards25519/scalar.go
 
 // project (https://github.com/mit-plv/fiat-crypto) at version v0.0.9 (23d2dbc)
 // from a formally verified model.
@@ -595,12 +595,12 @@ https://github.com/golang/go/blob/go1.26.8/src/crypto/internal/fips140/edwards25
 
 
 ========================================================================
-Go math-log go1.26.8
-Source: https://github.com/golang/go/blob/go1.26.8/src/math/log.go
+Go math-log go1.26.11
+Source: https://github.com/golang/go/blob/go1.26.11/src/math/log.go
 Original notice: go/math-log-NOTICE
 ========================================================================
 
-https://github.com/golang/go/blob/go1.26.8/src/math/log.go
+https://github.com/golang/go/blob/go1.26.11/src/math/log.go
 
 // below are from FreeBSD's /usr/src/lib/msun/src/e_log.c
 // and came with this notice. The go code is a simpler
@@ -618,12 +618,12 @@ https://github.com/golang/go/blob/go1.26.8/src/math/log.go
 
 
 ========================================================================
-Go math-exp go1.26.8
-Source: https://github.com/golang/go/blob/go1.26.8/src/math/exp.go
+Go math-exp go1.26.11
+Source: https://github.com/golang/go/blob/go1.26.11/src/math/exp.go
 Original notice: go/math-exp-NOTICE
 ========================================================================
 
-https://github.com/golang/go/blob/go1.26.8/src/math/exp.go
+https://github.com/golang/go/blob/go1.26.11/src/math/exp.go
 
 // below are from FreeBSD's /usr/src/lib/msun/src/e_exp.c
 // and came with this notice. The go code is a simplified
@@ -640,12 +640,12 @@ https://github.com/golang/go/blob/go1.26.8/src/math/exp.go
 
 
 ========================================================================
-Go memmove-amd64 go1.26.8
-Source: https://github.com/golang/go/blob/go1.26.8/src/runtime/memmove_amd64.s
+Go memmove-amd64 go1.26.11
+Source: https://github.com/golang/go/blob/go1.26.11/src/runtime/memmove_amd64.s
 Original notice: go/memmove-amd64-NOTICE
 ========================================================================
 
-https://github.com/golang/go/blob/go1.26.8/src/runtime/memmove_amd64.s
+https://github.com/golang/go/blob/go1.26.11/src/runtime/memmove_amd64.s
 
 // Derived from Inferno's libkern/memmove-386.s (adapted for amd64)
 // https://bitbucket.org/inferno-os/inferno-os/src/master/libkern/memmove-386.s
