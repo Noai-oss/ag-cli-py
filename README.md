@@ -38,6 +38,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for local builds, checks, and release wor
 
 ## License
 
-The packaging code and project documentation use [Apache-2.0](LICENSE). The unmodified AtomGit CLI executable uses [MulanPSL-2.0](https://github.com/hust-open-atom-club/atomgit-cli/blob/v0.7.4/LICENSE); bundled components retain their respective licenses, reproduced in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES).
+The packaging code and project documentation use [Apache-2.0](LICENSE). The unmodified AtomGit CLI executable uses [MulanPSL-2.0](https://github.com/hust-open-atom-club/atomgit-cli/blob/v0.7.5/LICENSE); bundled components retain their respective licenses, reproduced in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES).
 
 Each wheel includes the original upstream `LICENSE`, `PACKAGING-LICENSE`, and `THIRD_PARTY_NOTICES` under `.dist-info/licenses/`.
