@@ -75,8 +75,8 @@ def update_version(
             "All configured archives and checksums.txt have unique HTTPS asset "
             "links. CI will download, verify SHA-256 checksums, build and test "
             "the wheels.\n\n"
-            "Review platform compatibility and this PR, then publish "
-            f"tag v{version} from main.\n",
+            "For agent-assisted validation, use `$atomgit-release-upgrade` "
+            "(`.agents/skills/atomgit-release-upgrade/SKILL.md`).\n",
             encoding="utf-8",
         )
     config["version"] = version
