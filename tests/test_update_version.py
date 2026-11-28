@@ -1,11 +1,13 @@
 """Check GitHub release selection and atomic version updates."""
 
+import base64
 import copy
 import json
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlsplit
 
 from scripts import update_version
 from scripts.common import ROOT
@@ -161,3 +163,122 @@ class UpdateTests(unittest.TestCase):
                 self.assertRaises((ValueError, TypeError)),
             ):
                 update_version.latest_release("owner/repo")
+
+
+class OpenUpgradeTests(unittest.TestCase):
+    repository = "Noai-oss/ag-cli-py"
+    branch = "update-upstream-version"
+    api = "https://api.github.com/repos/Noai-oss/ag-cli-py"
+    sha = "a" * 40
+
+    def setUp(self):
+        self.pr = {
+            "number": 5,
+            "state": "open",
+            "base": {"ref": "main"},
+            "head": {
+                "ref": self.branch,
+                "repo": {"full_name": self.repository},
+                "sha": self.sha,
+            },
+        }
+        self.commits = []
+        self.comments = []
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.config = Path(self.temporary.name) / "wheel.json"
+        self.original = json.dumps({**CONFIG, "version": "0.7.4"})
+        self.config.write_text(self.original)
+        self.report = self.config.with_suffix(".md")
+        self.report.write_text("existing report\n")
+
+    def request(self, url, token):
+        self.assertEqual(token, "token")
+        self.commits.append(url)
+        if url.startswith(f"{self.api}/pulls?"):
+            self.assertEqual(
+                parse_qs(urlsplit(url).query),
+                {
+                    "state": ["open"],
+                    "base": ["main"],
+                    "head": ["Noai-oss:" + self.branch],
+                },
+            )
+            return [] if self.pr is None else [self.pr]
+        if url == f"{self.api}/contents/wheel.json?ref={self.sha}":
+            return {
+                "encoding": "base64",
+                "content": base64.b64encode(b'{"version":"0.7.5"}').decode(),
+            }
+        if url == f"{self.api}/issues/5/comments?per_page=100&page=1":
+            return self.comments[:100]
+        if url == f"{self.api}/issues/5/comments?per_page=100&page=2":
+            return self.comments[100:]
+        self.fail(f"Unexpected request: {url}")
+
+    def run_update(self, version):
+        with (
+            patch.object(
+                update_version, "latest_release", return_value=release(version)
+            ),
+            patch.object(update_version, "get_json", side_effect=self.request),
+            patch.object(update_version.urllib.request, "urlopen") as post,
+        ):
+            post.return_value.__enter__.return_value.status = 201
+            changed = update_version.update_version(
+                self.config,
+                "token",
+                self.report,
+                packaging_repository=self.repository,
+                pr_branch=self.branch,
+            )
+        return changed, post
+
+    def assert_no_rewrite(self):
+        self.assertEqual(self.config.read_text(), self.original)
+        self.assertEqual(self.report.read_text(), "existing report\n")
+
+    def test_same_or_older_candidate_does_not_touch_open_pr(self):
+        for version in ("0.7.5", "0.7.4"):
+            with self.subTest(version=version):
+                changed, post = self.run_update(version)
+                self.assertFalse(changed)
+                post.assert_not_called()
+                self.assert_no_rewrite()
+        self.assertFalse(any("/comments" in url for url in self.commits))
+
+    def test_newer_candidate_comments_once_without_rewriting(self):
+        changed, post = self.run_update("0.7.6")
+        self.assertFalse(changed)
+        post.assert_called_once()
+        request = post.call_args.args[0]
+        self.assertEqual(request.get_method(), "POST")
+        self.assertEqual(request.full_url, f"{self.api}/issues/5/comments")
+        body = json.loads(request.data)["body"]
+        self.assertIn("ag-cli-py-upstream-release:v0.7.6", body)
+        self.assertIn("This PR still targets v0.7.5", body)
+        self.assert_no_rewrite()
+
+        self.comments = [{"body": "unrelated"}] * 100 + [
+            {"user": {"login": "github-actions[bot]"}, "body": body}
+        ]
+        changed, post = self.run_update("0.7.6")
+        self.assertFalse(changed)
+        post.assert_not_called()
+        self.assert_no_rewrite()
+
+    def test_no_open_pr_preserves_version_only_update(self):
+        self.pr = None
+        changed, post = self.run_update("0.7.6")
+        self.assertTrue(changed)
+        self.assertEqual(
+            json.loads(self.config.read_text()), {**CONFIG, "version": "0.7.6"}
+        )
+        self.assertIn("atomgit-release-upgrade", self.report.read_text())
+        post.assert_not_called()
+
+    def test_unexpected_pr_identity_fails_without_writing(self):
+        self.pr["head"]["repo"]["full_name"] = "another-user/ag-cli-py"
+        with self.assertRaisesRegex(ValueError, "Unexpected upgrade PR identity"):
+            self.run_update("0.7.6")
+        self.assert_no_rewrite()
