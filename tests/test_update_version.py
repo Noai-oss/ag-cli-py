@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from urllib.error import HTTPError
 
 from scripts import update_version
 from scripts.common import ROOT
@@ -161,3 +162,68 @@ class UpdateTests(unittest.TestCase):
                 self.assertRaises((ValueError, TypeError)),
             ):
                 update_version.latest_release("owner/repo")
+
+
+class VersionBranchTests(unittest.TestCase):
+    repo = "Noai-oss/ag-cli-py"
+    api = f"https://api.github.com/repos/{repo}"
+
+    def run_update(self, *, ref=False, status=404):
+        candidate = "0.7.6"
+        branch = f"update/atomgit-v{candidate}"
+
+        def request(url, token):
+            self.assertEqual(token, "token")
+            if url == f"{self.api}/git/ref/heads/{branch}":
+                if ref:
+                    return {"ref": f"refs/heads/{branch}"}
+                raise HTTPError(url, status, "mock response", {}, None)
+            self.fail(f"Unexpected API request: {url}")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            config = Path(temporary) / "wheel.json"
+            original = json.dumps({**CONFIG, "version": "0.7.4"})
+            config.write_text(original)
+            report = config.with_suffix(".md")
+            with (
+                patch.object(
+                    update_version, "latest_release", return_value=release(candidate)
+                ),
+                patch.object(update_version, "get_json", side_effect=request),
+                patch.object(update_version, "outputs") as outputs,
+            ):
+                try:
+                    changed = update_version.update_version(
+                        config, "token", report, packaging_repository=self.repo
+                    )
+                except HTTPError:
+                    self.assertEqual(config.read_text(), original)
+                    self.assertFalse(report.exists())
+                    raise
+
+            if changed:
+                self.assertEqual(
+                    json.loads(config.read_text()), {**CONFIG, "version": candidate}
+                )
+                outputs.assert_called_once_with(
+                    changed="true",
+                    previous_version="0.7.4",
+                    version=candidate,
+                    branch=branch,
+                )
+                self.assertIn("atomgit-release-upgrade", report.read_text())
+            else:
+                self.assertEqual(config.read_text(), original)
+                self.assertFalse(report.exists())
+                outputs.assert_called_once_with(changed="false", version="0.7.4")
+            return changed
+
+    def test_existing_version_ref_is_not_reused(self):
+        self.assertFalse(self.run_update(ref=True))
+
+    def test_new_version_gets_its_own_branch(self):
+        self.assertTrue(self.run_update())
+
+    def test_reference_lookup_failure_does_not_write(self):
+        with self.assertRaises(HTTPError):
+            self.run_update(status=403)

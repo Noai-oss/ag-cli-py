@@ -3,10 +3,12 @@
 import argparse
 import json
 import os
+import re
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.parse import urlsplit
 
-from scripts.common import ROOT, canonical_version, outputs
+from scripts.common import ROOT, canonical_version, outputs, summary
 from scripts.upstream import asset_names, get_json, stable_version, upstream_repository
 
 
@@ -57,8 +59,28 @@ def candidate_release(config: dict, release: dict) -> str | None:
     return version
 
 
+def version_branch_exists(repository: str, branch: str, token: str) -> bool:
+    """Check the exact remote ref without reusing an existing version branch."""
+    if not re.fullmatch(r"[\w.-]+/[\w.-]+", repository):
+        raise ValueError("Expected a GitHub owner/repository")
+    api = f"https://api.github.com/repos/{repository}"
+    try:
+        ref = get_json(f"{api}/git/ref/heads/{branch}", token)
+    except HTTPError as exc:
+        if exc.code == 404:
+            return False
+        raise
+    if not isinstance(ref, dict) or ref.get("ref") != f"refs/heads/{branch}":
+        raise ValueError("Unexpected version branch identity")
+    return True
+
+
 def update_version(
-    config_path: Path, token: str | None = None, report_path: Path | None = None
+    config_path: Path,
+    token: str | None = None,
+    report_path: Path | None = None,
+    *,
+    packaging_repository: str | None = None,
 ) -> bool:
     config = json.loads(config_path.read_text(encoding="utf-8"))
     repository = upstream_repository(config["homepage"])
@@ -68,6 +90,14 @@ def update_version(
     if version is None:
         outputs(changed="false", version=previous)
         return False
+    branch = f"update/atomgit-v{version}"
+    if packaging_repository is not None:
+        if not token:
+            raise ValueError("Checking existing upgrades requires a GitHub token")
+        if version_branch_exists(packaging_repository, branch, token):
+            summary(f"Upgrade v{version} already exists; left it unchanged.")
+            outputs(changed="false", version=previous)
+            return False
     if report_path:
         report_path.write_text(
             f"Update AtomGit CLI from {previous} to {version}.\n\n"
@@ -81,15 +111,21 @@ def update_version(
         )
     config["version"] = version
     config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
-    outputs(changed="true", previous_version=previous, version=version)
+    outputs(changed="true", previous_version=previous, version=version, branch=branch)
     return True
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--packaging-repository")
     args = parser.parse_args()
-    update_version(ROOT / "wheel.json", os.environ.get("GITHUB_TOKEN"), args.report)
+    update_version(
+        ROOT / "wheel.json",
+        os.environ.get("GITHUB_TOKEN"),
+        args.report,
+        packaging_repository=args.packaging_repository,
+    )
 
 
 if __name__ == "__main__":
